@@ -23,50 +23,60 @@ import java.time.Instant
 /lognotify list (list)
  */
 object LogNotifyCommand {
-    fun command(storage: Storage): LiteralCommandNode<CommandSourceStack> {
-        return literal("lognotify")
-            .requires {
-                it.sender.hasPermission(listPermission) || it.sender.hasPermission(editPermission)
-            }.executes {
-                sendHelp(it.source.sender)
-                return@executes Command.SINGLE_SUCCESS
-            }
-            .then(
-                literal("add")
-                    .requires {
-                        it.sender.hasPermission(editPermission)
-                    }
-                    .then(
-                        argument("name", ArgumentTypes.playerProfiles())
-                            .then(
-                                argument("comment", StringArgumentType.greedyString())
-                                    .executes {
-                                        add(it, storage)
-                                        return@executes Command.SINGLE_SUCCESS
-                                    }
-                            )
-                    )
-            )
-            .then(
-                literal("remove")
-                    .requires { it.sender.hasPermission(editPermission) }
-                    .then(
-                        argument("name", NotificationRecordArgumentType(storage))
-                            .executes {
-                                remove(it, storage)
-                                return@executes Command.SINGLE_SUCCESS
-                            }
-                    )
-            )
-            .then(
-                literal("list")
-                    .requires { it.sender.hasPermission(listPermission) }
-                    .executes {
-                        sendList(it.source.sender, storage)
-                        return@executes Command.SINGLE_SUCCESS
-                    }
-            ).build()
+    fun commands(storage: Storage): Array<LiteralCommandNode<CommandSourceStack>> {
+        val logNotifyCommand = logNotifyCommand(storage)
+        val lnnCommand = literal("lnn").requires {
+          it.sender.hasPermission(listPermission) || it.sender.hasPermission(editPermission)
+        }.executes {
+          sendHelp(it.source.sender)
+          Command.SINGLE_SUCCESS
+        }
+          .redirect(logNotifyCommand).build()
+        return arrayOf(logNotifyCommand, lnnCommand)
     }
+
+    fun logNotifyCommand(storage: Storage) = literal("lognotify")
+      .requires {
+        it.sender.hasPermission(listPermission) || it.sender.hasPermission(editPermission)
+      }.executes {
+        sendHelp(it.source.sender)
+        return@executes Command.SINGLE_SUCCESS
+      }
+      .then(
+        literal("add")
+          .requires {
+            it.sender.hasPermission(editPermission)
+          }
+          .then(
+            argument("name", ArgumentTypes.playerProfiles())
+              .then(
+                argument("comment", StringArgumentType.greedyString())
+                  .executes {
+                    add(it, storage)
+                    return@executes Command.SINGLE_SUCCESS
+                  }
+              )
+          )
+      )
+      .then(
+        literal("remove")
+          .requires { it.sender.hasPermission(editPermission) }
+          .then(
+            argument("name", NotificationRecordArgumentType(storage))
+              .executes {
+                remove(it, storage)
+                return@executes Command.SINGLE_SUCCESS
+              }
+          )
+      )
+      .then(
+        literal("list")
+          .requires { it.sender.hasPermission(listPermission) }
+          .executes {
+            sendList(it.source.sender, storage)
+            return@executes Command.SINGLE_SUCCESS
+          }
+      ).build()
 
     fun sendHelp(sender: CommandSender) {
         if (sender.hasPermission(editPermission)) {

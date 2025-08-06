@@ -1,6 +1,5 @@
 package ru.edenor.loginNotify
 
-import io.papermc.paper.command.brigadier.Commands.literal
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import org.bukkit.plugin.java.JavaPlugin
 import ru.edenor.loginNotify.command.LogNotifyCommand
@@ -14,10 +13,8 @@ class LoginNotify : JavaPlugin() {
         // Plugin startup logic
         val storage = ConfigStorage(this)
 
-        lifecycleManager.registerEventHandler(LifecycleEvents.COMMANDS) {
-            val logCommand = LogNotifyCommand.command(storage)
-            it.registrar().register(logCommand)
-            it.registrar().register(literal("lnn").redirect(logCommand).build())
+        lifecycleManager.registerEventHandler(LifecycleEvents.COMMANDS) { commands ->
+            LogNotifyCommand.commands(storage).forEach { commands.registrar().register(it) }
         }
 
         server.pluginManager.registerEvents(PlayerJoinHandler(storage), this)
