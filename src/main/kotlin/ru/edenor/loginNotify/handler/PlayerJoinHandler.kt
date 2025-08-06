@@ -15,16 +15,18 @@ class PlayerJoinHandler(private val storage: Storage) : Listener {
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        val record = storage.getPlayer(event.player.name) ?: return
+        val (playerName, comment, createdAt, addedBy) = storage.getPlayer(event.player.name) ?: return
+        val formattedDate = LoginNotify.dateTimeFormatter.format(createdAt)
 
         val message = miniMessage().deserialize(
-            "<bold>Игрок <dark_red>${record.playerName}</dark_red> зашел.</bold> <br>" +
-                    "Добавил в список <aqua>${record.addedBy}</aqua> ${record.createdAt} <br>" +
-                    "C комментарием '${record.comment}'"
+            "<bold><dark_red>$playerName зашел.</dark_red></bold><br>" +
+                    "<red>Добавил в список <gold>$addedBy</gold> $formattedDate <br>" +
+                    "<red>C комментарием <gold>'$comment'"
         )
 
         Bukkit.getOnlinePlayers()
             .filter { it.hasPermission(LoginNotify.notificationPermission) }
+            .filter { storage.shouldNotify(it.name) }
             .forEach {
                 it.sendMessage(message)
                 it.playSound(it, Sound.BLOCK_NOTE_BLOCK_BELL, SoundCategory.UI, 1f, 1f)

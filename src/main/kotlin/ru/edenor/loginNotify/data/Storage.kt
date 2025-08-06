@@ -5,4 +5,7 @@ interface Storage {
     fun removePlayer(username: String)
     fun getPlayers(): List<NotificationRecord>
     fun getPlayer(username: String): NotificationRecord?
+    fun getSettings(username: String): AdminSettings
+    fun setSettings(settings: AdminSettings)
+    fun shouldNotify(username: String): Boolean = getSettings(username).toggled
 }

@@ -2,6 +2,7 @@ package ru.edenor.loginNotify.data
 
 import org.bukkit.configuration.ConfigurationSection
 import ru.edenor.loginNotify.LoginNotify
+import ru.edenor.loginNotify.data.AdminSettings.Companion.defaultAdminSettings
 import java.time.Instant
 
 class ConfigStorage(private val plugin: LoginNotify) : Storage {
@@ -19,7 +20,7 @@ class ConfigStorage(private val plugin: LoginNotify) : Storage {
 
 
     override fun addPlayer(record: NotificationRecord) {
-        val section = plugin.config.getOrCreateConfigurationSection(sectionName)
+        val section = plugin.config.getOrCreateConfigurationSection(playerSectionName)
 
         val playerSection = section.getOrCreateConfigurationSection(record.playerName)
         playerSection.set(comment, record.comment)
@@ -31,7 +32,7 @@ class ConfigStorage(private val plugin: LoginNotify) : Storage {
     }
 
     override fun removePlayer(username: String) {
-        val section = plugin.config.getOrCreateConfigurationSection(sectionName)
+        val section = plugin.config.getOrCreateConfigurationSection(playerSectionName)
         section.set(username, null)
 
         plugin.saveConfig()
@@ -40,9 +41,29 @@ class ConfigStorage(private val plugin: LoginNotify) : Storage {
 
     override fun getPlayers(): List<NotificationRecord> = getCache().values.toList()
 
+    override fun getSettings(username: String): AdminSettings {
+
+        val section = plugin.config.getOrCreateConfigurationSection(adminSectionName)
+
+        val adminSection = section.getConfigurationSection(username)
+            ?: return defaultAdminSettings(username)
+
+        return AdminSettings(username, adminSection.getBoolean(toggleNotify))
+
+    }
+
+    override fun setSettings(settings: AdminSettings) {
+        val section = plugin.config.getOrCreateConfigurationSection(adminSectionName)
+
+        val adminSection = section.getOrCreateConfigurationSection(settings.adminName)
+        adminSection.set(toggleNotify, settings.toggled)
+
+        plugin.saveConfig()
+    }
+
     fun getPlayersUncached(): List<NotificationRecord> {
         val records = mutableListOf<NotificationRecord>()
-        val section = plugin.config.getOrCreateConfigurationSection(sectionName)
+        val section = plugin.config.getOrCreateConfigurationSection(playerSectionName)
         val keys: Set<String> = section.getKeys(false)
 
         for (key in keys) {
@@ -64,9 +85,13 @@ class ConfigStorage(private val plugin: LoginNotify) : Storage {
             ?: this.createSection(name)
 
     companion object {
-        const val sectionName = "players"
+        const val playerSectionName = "players"
+        const val adminSectionName = "admins"
         const val comment = "comment"
         const val createdAt = "created_at"
         const val addedBy = "added_by"
+        const val toggleNotify = "toggle_notify"
     }
+
+
 }

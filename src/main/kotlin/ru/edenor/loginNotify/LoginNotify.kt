@@ -5,6 +5,8 @@ import org.bukkit.plugin.java.JavaPlugin
 import ru.edenor.loginNotify.command.LogNotifyCommand
 import ru.edenor.loginNotify.data.ConfigStorage
 import ru.edenor.loginNotify.handler.PlayerJoinHandler
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 
 class LoginNotify : JavaPlugin() {
@@ -29,7 +31,10 @@ class LoginNotify : JavaPlugin() {
         const val notificationPermission = "loginnotify.notify"
         const val editPermission = "loginnotify.edit"
         const val listPermission = "loginnotify.list"
+        val dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy").withZone(ZoneId.systemDefault())
 
     }
+
+
 }
 
