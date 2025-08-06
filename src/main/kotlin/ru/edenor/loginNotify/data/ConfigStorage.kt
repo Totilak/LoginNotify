@@ -24,7 +24,7 @@ class ConfigStorage(private val plugin: LoginNotify) : Storage {
         val playerSection = section.getOrCreateConfigurationSection(record.playerName)
         playerSection.set(comment, record.comment)
         playerSection.set(createdAt, record.createdAt.toString())
-        playerSection.set(createdAt, record.addedBy)
+        playerSection.set(addedBy, record.addedBy)
 
         plugin.saveConfig()
         getCache()[record.playerName] = record
