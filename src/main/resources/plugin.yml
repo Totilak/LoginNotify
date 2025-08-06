@@ -1,0 +1,11 @@
+name: LoginNotify
+version: '1.0'
+main: ru.edenor.loginNotify.LoginNotify
+api-version: '1.21'
+permissions:
+  loginnotify.notify:
+    description: Получать уведомления о входе
+  loginnotify.edit:
+    description: Добавлять и удалять игроков
+  loginnotify.list:
+    description: Просматривать список
