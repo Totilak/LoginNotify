@@ -1,7 +1,10 @@
 name: LoginNotify
 version: '1.0'
+author: Totilak
+contributors: [WesOrangePower]
 main: ru.edenor.loginNotify.LoginNotify
-api-version: '1.21'
+description: The plugin allows you to notify the administration when marked players log in
+api-version: '1.21.7'
 permissions:
   loginnotify.notify:
     description: Получать уведомления о входе
