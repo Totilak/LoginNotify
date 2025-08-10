@@ -13,6 +13,11 @@ class ConfigStorage(private val plugin: LoginNotify) : Storage {
   private val settingsFile = plugin.dataFolder.resolve(SETTINGS_FILENAME)
   private val settingsConfig = YamlConfiguration.loadConfiguration(settingsFile)
 
+  init {
+    settingsFile.mkdirs()
+    settingsFile.createNewFile()
+  }
+
   private fun getCache(): MutableMap<String, NotificationRecord> {
     if (cache == null) {
       cache = getPlayersUncached().associateBy { it.playerName }.toMutableMap()
