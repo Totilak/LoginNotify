@@ -17,62 +17,50 @@ import java.util.concurrent.CompletableFuture
 
 
 class NotificationRecordArgumentType(private val storage: Storage) : CustomArgumentType<String, String> {
+  companion object {
+    @JvmStatic
+    val ERROR_BAD_SOURCE = SimpleCommandExceptionType(
+      MessageComponentSerializer.message()
+        .serialize(Component.text("The source needs to be a CommandSourceStack!"))
+    )
 
-
-    override fun parse(reader: StringReader): String {
-        return reader.readUnquotedString()
+    @JvmStatic
+    val ERROR_PLAYER_NOT_TRACKED = DynamicCommandExceptionType {
+      MessageComponentSerializer.message()
+        .serialize(Component.text("$it не отслеживается!"))
     }
 
-    override fun getNativeType(): ArgumentType<String> {
-        return StringArgumentType.word()
+    fun getArgument(argument: String, context: CommandContext<CommandSourceStack>): String =
+      context.getArgument(argument, String::class.java)
+  }
+
+  override fun parse(reader: StringReader): String = reader.readUnquotedString()
+
+  override fun getNativeType(): ArgumentType<String> = StringArgumentType.word()
+
+  override fun <S : Any> parse(reader: StringReader, source: S): String {
+    if (source !is CommandSourceStack) {
+      throw ERROR_BAD_SOURCE.create()
     }
 
-    override fun <S : Any> parse(reader: StringReader, source: S): String {
+    val playerName = nativeType.parse(reader)
 
-        if (source !is CommandSourceStack) {
-            throw ERROR_BAD_SOURCE.create()
-        }
-
-        val playerName = nativeType.parse(reader)
-
-        if (storage.getPlayer(playerName) == null) {
-            throw ERROR_PLAYER_NOT_TRACKED.create(playerName)
-        }
-
-        return playerName
-
+    if (storage.getPlayer(playerName) == null) {
+      throw ERROR_PLAYER_NOT_TRACKED.create(playerName)
     }
 
-    override fun <S : Any> listSuggestions(
-        context: CommandContext<S>,
-        builder: SuggestionsBuilder
-    ): CompletableFuture<Suggestions> {
-        val players = storage.getPlayers()
-        for (player in players) {
-            if (player.playerName.startsWith(builder.remaining)) {
-                builder.suggest(player.playerName)
-            }
-        }
-        return builder.buildFuture()
-    }
+    return playerName
+  }
 
-    companion object {
-        @JvmStatic
-        val ERROR_BAD_SOURCE = SimpleCommandExceptionType(
-            MessageComponentSerializer.message()
-                .serialize(Component.text("The source needs to be a CommandSourceStack!"))
-        )
+  override fun <S : Any> listSuggestions(
+    context: CommandContext<S>,
+    builder: SuggestionsBuilder
+  ): CompletableFuture<Suggestions> {
+    storage.getPlayers()
+      .filter { it.playerName.startsWith(builder.remaining) }
+      .forEach { builder.suggest(it.playerName) }
 
-        val ERROR_PLAYER_NOT_TRACKED = DynamicCommandExceptionType(
-            {
-                MessageComponentSerializer.message()
-                    .serialize(Component.text("$it не отслеживается!"))
-            }
-        )
-
-        fun getArgument(argument: String, context: CommandContext<CommandSourceStack>): String {
-            return context.getArgument(argument, String::class.java)
-        }
-    }
+    return builder.buildFuture()
+  }
 }
 
