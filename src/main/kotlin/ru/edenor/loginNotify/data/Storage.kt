@@ -8,6 +8,7 @@ interface Storage {
   fun getSettings(username: String): AdminSettings
   fun setSettings(settings: AdminSettings)
   fun shouldNotify(username: String): Boolean = getSettings(username).toggled
+  fun reload()
 
   var pluginSettings: PluginSettings
 }

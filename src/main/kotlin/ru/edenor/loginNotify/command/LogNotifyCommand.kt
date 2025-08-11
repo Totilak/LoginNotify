@@ -10,9 +10,11 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import io.papermc.paper.command.brigadier.argument.resolvers.PlayerProfileListResolver
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
+import ru.edenor.loginNotify.LoginNotify
 import ru.edenor.loginNotify.LoginNotify.Companion.EDIT_PERMISSION
 import ru.edenor.loginNotify.LoginNotify.Companion.LIST_PERMISSION
 import ru.edenor.loginNotify.LoginNotify.Companion.NOTIFICATION_PERMISSION
+import ru.edenor.loginNotify.LoginNotify.Companion.RELOAD_PERMISSION
 import ru.edenor.loginNotify.LoginNotify.Companion.toLoginNotifyFormat
 import ru.edenor.loginNotify.command.CommandExtensions.requiresAnyPermission
 import ru.edenor.loginNotify.command.CommandExtensions.requiresPermission
@@ -22,7 +24,7 @@ import ru.edenor.loginNotify.data.NotificationRecord
 import ru.edenor.loginNotify.data.Storage
 import java.time.Instant
 
-class LogNotifyCommand(private val storage: Storage) {
+class LogNotifyCommand(private val plugin: LoginNotify ,private val storage: Storage) {
   fun commands(): Array<LiteralCommandNode<CommandSourceStack>> {
     return arrayOf(logNotify, lnn)
   }
@@ -54,6 +56,11 @@ class LogNotifyCommand(private val storage: Storage) {
       .requiresPermission(NOTIFICATION_PERMISSION)
       .simplyRun(::toggleNotifications)
 
+  private val reloadSection =
+    literal("reload")
+      .requiresPermission(RELOAD_PERMISSION)
+      .simplyRun(::reload)
+
   private val logNotify = literal("lognotify")
     .requiresAnyPermission()
     .simplyRun(::sendHelp)
@@ -61,6 +68,7 @@ class LogNotifyCommand(private val storage: Storage) {
     .then(removeSection)
     .then(listSection)
     .then(toggleSection)
+    .then(reloadSection)
     .build()
 
   private val lnn = literal("lnn")
@@ -74,6 +82,11 @@ class LogNotifyCommand(private val storage: Storage) {
     storage.setSettings(AdminSettings(sender.name, newToggled))
     val toggledText = if (newToggled) "<green>Включены</green>" else "<red>Выключены</red>"
     sender.sendRichMessage("Уведомления о входе: $toggledText")
+  }
+
+  private fun reload(sender: CommandSender) {
+    plugin.reload()
+    sender.sendRichMessage("<green>Настройки успешно перезагружены")
   }
 
   private fun sendHelp(sender: CommandSender) {
@@ -92,6 +105,9 @@ class LogNotifyCommand(private val storage: Storage) {
     }
     if (sender.hasPermission(NOTIFICATION_PERMISSION)) {
       sender.sendRichMessage("<green>/lognotify toggle <yellow>- Вкл/Выкл. уведомлений")
+    }
+    if (sender.hasPermission(RELOAD_PERMISSION)) {
+      sender.sendRichMessage("<green>/lognotify reload <yellow>- Перезагрузить настройки")
     }
   }
 
