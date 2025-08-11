@@ -12,3 +12,5 @@ permissions:
     description: Добавлять и удалять игроков
   loginnotify.list:
     description: Просматривать список
+  loginnotify.reload:
+    description: Перезагружать плагин
