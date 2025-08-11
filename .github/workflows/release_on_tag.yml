@@ -9,6 +9,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,16 +23,21 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Make Gradle Wrapper Executable
-        run: chmod +x ./gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build with Gradle
         run: ./gradlew build
 
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Plugin jars
+          path: build/libs/*.jar
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/') # Only run this step if the push was a tag
         with:
-          # The name of the release is automatically set to the tag name
-          # The body of the release is automatically set to the tag message
-          files: |
-            build/libs/*.jar
+          name: Version ${{github.ref_name}}
+          files: build/libs/*.jar
