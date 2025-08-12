@@ -14,3 +14,5 @@ permissions:
     description: Просматривать список
   loginnotify.reload:
     description: Перезагружать плагин
+  loginnotify.matrixToggle:
+    description: Отключить сообщения от Matrix

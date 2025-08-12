@@ -53,7 +53,10 @@ class ConfigStorage(private val plugin: LoginNotify) : Storage {
         section.getConfigurationSection(username)
             ?: return defaultAdminSettings(username)
 
-    return AdminSettings(username, adminSection.getBoolean(TOGGLE_NOTIFY))
+    return AdminSettings(
+        username,
+        adminSection.getBoolean(TOGGLE_NOTIFY),
+        adminSection.getBoolean(TOGGLE_MATRIX_NOTIFY))
   }
 
   override fun setSettings(settings: AdminSettings) {
@@ -62,6 +65,7 @@ class ConfigStorage(private val plugin: LoginNotify) : Storage {
     val adminSection =
         section.getOrCreateConfigurationSection(settings.adminName)
     adminSection.set(TOGGLE_NOTIFY, settings.toggled)
+    adminSection.set(TOGGLE_MATRIX_NOTIFY, settings.toggleMatrix)
 
     plugin.saveConfig()
   }
@@ -128,6 +132,7 @@ class ConfigStorage(private val plugin: LoginNotify) : Storage {
     const val ADDED_BY = "added_by"
     const val CREATED_AT = "created_at"
     const val TOGGLE_NOTIFY = "toggle_notify"
+    const val TOGGLE_MATRIX_NOTIFY = "matrix_toggle_notify"
     const val ADMIN_SECTION = "admins"
     const val PLAYER_SECTION = "players"
 

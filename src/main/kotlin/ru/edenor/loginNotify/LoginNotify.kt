@@ -3,6 +3,7 @@ package ru.edenor.loginNotify
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import org.bukkit.plugin.java.JavaPlugin
 import ru.edenor.loginNotify.command.LogNotifyCommand
+import ru.edenor.loginNotify.command.ToggleMatrixNotificationsCommand
 import ru.edenor.loginNotify.data.ConfigStorage
 import ru.edenor.loginNotify.data.Storage
 import ru.edenor.loginNotify.handler.PlayerJoinHandler
@@ -22,6 +23,9 @@ class LoginNotify : JavaPlugin() {
       LogNotifyCommand(this, storage).commands().forEach {
         commands.registrar().register(it)
       }
+      ToggleMatrixNotificationsCommand(storage).matrixShutUp.let {
+        commands.registrar().register(it)
+      }
     }
 
     server.pluginManager.registerEvents(PlayerJoinHandler(storage), this)
@@ -37,6 +41,7 @@ class LoginNotify : JavaPlugin() {
     const val EDIT_PERMISSION = "loginnotify.edit"
     const val LIST_PERMISSION = "loginnotify.list"
     const val RELOAD_PERMISSION = "loginnotify.reload"
+    const val MATRIX_TOGGLE_PERMISSION = "loginnotify.matrixToggle"
     val dateTimeFormatter: DateTimeFormatter =
         DateTimeFormatter.ofPattern("dd.MM.yyyy")
             .withZone(ZoneId.systemDefault())
