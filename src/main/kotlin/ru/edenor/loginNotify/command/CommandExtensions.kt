@@ -8,6 +8,7 @@ import io.papermc.paper.command.brigadier.CommandSourceStack
 import org.bukkit.command.CommandSender
 import ru.edenor.loginNotify.LoginNotify.Companion.EDIT_PERMISSION
 import ru.edenor.loginNotify.LoginNotify.Companion.LIST_PERMISSION
+import ru.edenor.loginNotify.LoginNotify.Companion.MATRIX_TOGGLE_PERMISSION
 import ru.edenor.loginNotify.LoginNotify.Companion.NOTIFICATION_PERMISSION
 import ru.edenor.loginNotify.LoginNotify.Companion.RELOAD_PERMISSION
 
@@ -26,7 +27,8 @@ object CommandExtensions {
           LIST_PERMISSION,
           EDIT_PERMISSION,
           NOTIFICATION_PERMISSION,
-          RELOAD_PERMISSION)
+          RELOAD_PERMISSION,
+          MATRIX_TOGGLE_PERMISSION)
 
   internal fun LiteralArgumentBuilder<CommandSourceStack>.simplyRun(
       block: (CommandSender) -> Unit

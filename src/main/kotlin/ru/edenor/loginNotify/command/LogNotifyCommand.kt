@@ -13,6 +13,7 @@ import org.bukkit.command.CommandSender
 import ru.edenor.loginNotify.LoginNotify
 import ru.edenor.loginNotify.LoginNotify.Companion.EDIT_PERMISSION
 import ru.edenor.loginNotify.LoginNotify.Companion.LIST_PERMISSION
+import ru.edenor.loginNotify.LoginNotify.Companion.MATRIX_TOGGLE_PERMISSION
 import ru.edenor.loginNotify.LoginNotify.Companion.NOTIFICATION_PERMISSION
 import ru.edenor.loginNotify.LoginNotify.Companion.RELOAD_PERMISSION
 import ru.edenor.loginNotify.LoginNotify.Companion.toLoginNotifyFormat
@@ -24,65 +25,73 @@ import ru.edenor.loginNotify.data.NotificationRecord
 import ru.edenor.loginNotify.data.Storage
 import java.time.Instant
 
-class LogNotifyCommand(private val plugin: LoginNotify ,private val storage: Storage) {
+class LogNotifyCommand(
+    private val plugin: LoginNotify,
+    private val storage: Storage
+) {
   fun commands(): Array<LiteralCommandNode<CommandSourceStack>> {
     return arrayOf(logNotify, lnn)
   }
 
-  private val addSection = literal("add")
-    .requiresPermission(EDIT_PERMISSION)
-    .then(
-      argument("name", ArgumentTypes.playerProfiles())
-        .then(
-          argument("comment", StringArgumentType.greedyString())
-            .simplyRun(::add)
-        )
-    )
+  private val addSection =
+      literal("add")
+          .requiresPermission(EDIT_PERMISSION)
+          .then(
+              argument("name", ArgumentTypes.playerProfiles())
+                  .then(
+                      argument("comment", StringArgumentType.greedyString())
+                          .simplyRun(::add)))
 
-  private val removeSection = literal("remove")
-    .requiresPermission(EDIT_PERMISSION)
-    .then(
-      argument("name", NotificationRecordArgumentType(storage))
-        .simplyRun(::remove)
-    )
+  private val removeSection =
+      literal("remove")
+          .requiresPermission(EDIT_PERMISSION)
+          .then(
+              argument("name", NotificationRecordArgumentType(storage))
+                  .simplyRun(::remove))
 
   private val listSection =
-    literal("list")
-      .requiresPermission(LIST_PERMISSION)
-      .simplyRun(::sendList)
+      literal("list").requiresPermission(LIST_PERMISSION).simplyRun(::sendList)
 
   private val toggleSection =
-    literal("toggle")
-      .requiresPermission(NOTIFICATION_PERMISSION)
-      .simplyRun(::toggleNotifications)
+      literal("toggle")
+          .requiresPermission(NOTIFICATION_PERMISSION)
+          .simplyRun(::toggleNotifications)
 
   private val reloadSection =
-    literal("reload")
-      .requiresPermission(RELOAD_PERMISSION)
-      .simplyRun(::reload)
+      literal("reload")
+          .requiresPermission(RELOAD_PERMISSION)
+          .simplyRun(::reload)
 
-  private val logNotify = literal("lognotify")
-    .requiresAnyPermission()
-    .simplyRun(::sendHelp)
-    .then(addSection)
-    .then(removeSection)
-    .then(listSection)
-    .then(toggleSection)
-    .then(reloadSection)
-    .build()
+  private val logNotify =
+      literal("lognotify")
+          .requiresAnyPermission()
+          .simplyRun(::sendHelp)
+          .then(addSection)
+          .then(removeSection)
+          .then(listSection)
+          .then(toggleSection)
+          .then(reloadSection)
+          .build()
 
-  private val lnn = literal("lnn")
-    .requiresAnyPermission()
-    .simplyRun(::sendHelp)
-    .redirect(logNotify)
-    .build()
+  private val lnn =
+      literal("lnn")
+          .requiresAnyPermission()
+          .simplyRun(::sendHelp)
+          .redirect(logNotify)
+          .build()
 
   private fun toggleNotifications(sender: CommandSender) {
     val newToggled = !storage.getSettings(sender.name).toggled
-    storage.setSettings(AdminSettings(sender.name, newToggled))
-    val toggledText = if (newToggled) "<green>Включены</green>" else "<red>Выключены</red>"
+    storage.setSettings(
+        AdminSettings(
+            sender.name,
+            newToggled,
+            storage.getSettings(sender.name).toggleMatrix))
+    val toggledText =
+        if (newToggled) "<green>Включены</green>" else "<red>Выключены</red>"
     sender.sendRichMessage("Уведомления о входе: $toggledText")
   }
+
 
   private fun reload(sender: CommandSender) {
     plugin.reload()
@@ -91,23 +100,29 @@ class LogNotifyCommand(private val plugin: LoginNotify ,private val storage: Sto
 
   private fun sendHelp(sender: CommandSender) {
     sender.sendRichMessage(
-      "<green><bold>LoginNotify</bold> <dark_aqua>- Позволяет уведомлять администрацию о заходе игрока на сервер"
-    )
+        "<green><bold>LoginNotify</bold> <dark_aqua>- Позволяет уведомлять администрацию о заходе игрока на сервер")
 
     if (sender.hasPermission(EDIT_PERMISSION)) {
       sender.sendRichMessage(
-        "<green>/lognotify add <username> <comment> <yellow>- Отслеживать игрока<br>" +
-            "<green>/lognotify remove <username> <yellow>- Перестать отслеживать"
-      )
+          "<green>/lognotify add <username> <comment> <yellow>- Отслеживать игрока<br>" +
+              "<green>/lognotify remove <username> <yellow>- Перестать отслеживать")
     }
     if (sender.hasPermission(LIST_PERMISSION)) {
-      sender.sendRichMessage("<green>/lognotify list <yellow>- Показать список отслеживаемых")
+      sender.sendRichMessage(
+          "<green>/lognotify list <yellow>- Показать список отслеживаемых")
     }
     if (sender.hasPermission(NOTIFICATION_PERMISSION)) {
-      sender.sendRichMessage("<green>/lognotify toggle <yellow>- Вкл/Выкл. уведомлений")
+      sender.sendRichMessage(
+          "<green>/lognotify toggle <yellow>- Вкл/Выкл. уведомлений")
     }
     if (sender.hasPermission(RELOAD_PERMISSION)) {
-      sender.sendRichMessage("<green>/lognotify reload <yellow>- Перезагрузить настройки")
+      sender.sendRichMessage(
+          "<green>/lognotify reload <yellow>- Перезагрузить настройки")
+    }
+    if (sender.hasPermission(MATRIX_TOGGLE_PERMISSION)) {
+      sender.sendRichMessage(
+        "<green>/matrixshutup <yellow>- " +
+            "Отключает уведомления <gray>[<dark_aqua>Matrix</dark_aqua>]</gray> <u>при входе</u>")
     }
   }
 
@@ -115,26 +130,33 @@ class LogNotifyCommand(private val plugin: LoginNotify ,private val storage: Sto
     val name = NotificationRecordArgumentType.getArgument("name", context)
 
     storage.removePlayer(name)
-    context.source.sender.sendRichMessage("<green>Игрок <gold>$name</gold> больше не отслеживается!")
+    context.source.sender.sendRichMessage(
+        "<green>Игрок <gold>$name</gold> больше не отслеживается!")
   }
 
   private fun add(context: CommandContext<CommandSourceStack>) {
-    val foundProfiles = context.getArgument("name", PlayerProfileListResolver::class.java)
-      .resolve(context.source)
+    val foundProfiles =
+        context
+            .getArgument("name", PlayerProfileListResolver::class.java)
+            .resolve(context.source)
     val comment = StringArgumentType.getString(context, "comment")
     val sender = context.source.sender
 
-    foundProfiles.map { it.name!! }
-      .forEach { name ->
-        if (!Regex("\\w+").matches(name)) {
-          sender.sendRichMessage("<dark_red>Невозможный никнейм <red>$name</red>!")
-          return
-        }
+    foundProfiles
+        .map { it.name!! }
+        .forEach { name ->
+          if (!Regex("\\w+").matches(name)) {
+            sender.sendRichMessage(
+                "<dark_red>Невозможный никнейм <red>$name</red>!")
+            return
+          }
 
-        NotificationRecord(name, comment, Instant.now(), sender.name)
-          .let { storage.addPlayer(it) }
-        sender.sendRichMessage("<green>Игрок <gold>$name</gold> теперь отслеживается!")
-      }
+          NotificationRecord(name, comment, Instant.now(), sender.name).let {
+            storage.addPlayer(it)
+          }
+          sender.sendRichMessage(
+              "<green>Игрок <gold>$name</gold> теперь отслеживается!")
+        }
   }
 
   private fun sendList(sender: CommandSender) {
@@ -147,17 +169,15 @@ class LogNotifyCommand(private val plugin: LoginNotify ,private val storage: Sto
     for ((playerName, comment, createdAt, addedBy) in players) {
       val formattedDate = createdAt.toLoginNotifyFormat()
 
-      val name = if (isPlayerOnline(playerName)) "<green>$playerName</green>" else "<red>$playerName</red>"
+      val name =
+          if (isPlayerOnline(playerName)) "<green>$playerName</green>"
+          else "<red>$playerName</red>"
 
       sender.sendRichMessage(
-        "$name: добавил <gold>$addedBy</gold> в $formattedDate <br>Описание: $comment"
-      )
+          "$name: добавил <gold>$addedBy</gold> в $formattedDate <br>Описание: $comment")
     }
   }
 
   private fun isPlayerOnline(playerName: String): Boolean =
-    Bukkit.getPlayer(playerName) != null
+      Bukkit.getPlayer(playerName) != null
 }
-
-
-
