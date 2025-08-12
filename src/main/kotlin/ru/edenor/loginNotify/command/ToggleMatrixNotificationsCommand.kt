@@ -17,13 +17,11 @@ class ToggleMatrixNotificationsCommand(private val storage: Storage) {
           .build()
 
   private fun toggleMatrixNotifications(sender: CommandSender) {
-    val doesNowIgnoreMatrixNotifications =
-        !storage.getSettings(sender.name).toggleMatrix
+    val settings = storage.getSettings(sender.name)
+    val doesNowIgnoreMatrixNotifications = !settings.toggleMatrix
     storage.setSettings(
         AdminSettings(
-            sender.name,
-            storage.getSettings(sender.name).toggled,
-            doesNowIgnoreMatrixNotifications))
+            sender.name, settings.toggled, doesNowIgnoreMatrixNotifications))
 
     if (doesNowIgnoreMatrixNotifications) {
       sender.sendRichMessage(
