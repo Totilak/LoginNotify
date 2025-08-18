@@ -28,7 +28,7 @@ class LoginNotify : JavaPlugin() {
       }
     }
 
-    server.pluginManager.registerEvents(PlayerJoinHandler(storage), this)
+    server.pluginManager.registerEvents(PlayerJoinHandler(this,storage), this)
     server.pluginManager.registerEvents(WebhookListener(this, storage), this)
   }
 

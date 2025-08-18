@@ -75,10 +75,14 @@ class LogNotifyCommand(
 
   private val lnn =
       literal("lnn")
-          .requiresAnyPermission()
-          .simplyRun(::sendHelp)
-          .redirect(logNotify)
-          .build()
+        .requiresAnyPermission()
+        .simplyRun(::sendHelp)
+        .then(addSection)
+        .then(removeSection)
+        .then(listSection)
+        .then(toggleSection)
+        .then(reloadSection)
+        .build()
 
   private fun toggleNotifications(sender: CommandSender) {
     val newToggled = !storage.getSettings(sender.name).toggled
