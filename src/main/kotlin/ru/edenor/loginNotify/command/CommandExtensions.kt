@@ -17,13 +17,17 @@ object CommandExtensions {
       permission: String
   ) = this.requires { it.sender.hasPermission(permission) }
 
-  internal fun LiteralArgumentBuilder<CommandSourceStack>.requiresPermissions(
+  internal fun LiteralArgumentBuilder<CommandSourceStack>.requiresAllPermissionsOf(
       vararg permissions: String
   ) = this.requires { ctx -> permissions.all { ctx.sender.hasPermission(it) } }
 
+  internal fun LiteralArgumentBuilder<CommandSourceStack>.requiresAnyPermissionOf(
+    vararg permissions: String
+  ) = this.requires { ctx -> permissions.any { ctx.sender.hasPermission(it) } }
+
   internal fun LiteralArgumentBuilder<CommandSourceStack>
       .requiresAnyPermission() =
-      this.requiresPermissions(
+      this.requiresAnyPermissionOf(
           LIST_PERMISSION,
           EDIT_PERMISSION,
           NOTIFICATION_PERMISSION,

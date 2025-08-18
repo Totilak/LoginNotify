@@ -8,11 +8,15 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.plugin.Plugin
 import ru.edenor.loginNotify.LoginNotify
 import ru.edenor.loginNotify.LoginNotify.Companion.toLoginNotifyFormat
 import ru.edenor.loginNotify.data.Storage
 
-class PlayerJoinHandler(private val storage: Storage) : Listener {
+class PlayerJoinHandler(
+    private val plugin: Plugin,
+    private val storage: Storage
+) : Listener {
 
   @EventHandler
   fun onPlayerJoin(event: PlayerJoinEvent) {
@@ -48,7 +52,11 @@ class PlayerJoinHandler(private val storage: Storage) : Listener {
     }
     val (_, _, toggleMatrix) = storage.getSettings(event.player.name)
     if (toggleMatrix) {
-      event.player.performCommand("matrix togglenotify")
+      Bukkit.getScheduler()
+          .runTaskLater(
+              plugin,
+              Runnable { event.player.performCommand("matrix togglenotify") },
+              20L)
     }
   }
 }
