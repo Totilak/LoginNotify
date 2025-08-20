@@ -16,3 +16,4 @@ permissions:
     description: Перезагружать плагин
   loginnotify.matrixToggle:
     description: Отключить сообщения от Matrix
+folia-supported: true
