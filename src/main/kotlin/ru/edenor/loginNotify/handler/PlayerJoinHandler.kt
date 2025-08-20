@@ -52,10 +52,10 @@ class PlayerJoinHandler(
     }
     val (_, _, toggleMatrix) = storage.getSettings(event.player.name)
     if (toggleMatrix) {
-      Bukkit.getScheduler()
-          .runTaskLater(
+      Bukkit.getGlobalRegionScheduler()
+          .runDelayed(
               plugin,
-              Runnable { event.player.performCommand("matrix togglenotify") },
+              { event.player.performCommand("matrix togglenotify") },
               20L)
     }
   }
