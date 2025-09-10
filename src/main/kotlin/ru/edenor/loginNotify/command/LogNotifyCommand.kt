@@ -57,14 +57,12 @@ class LogNotifyCommand(
                   .simplyRun(::remove))
 
   private val listSection =
-    literal("list")
-      .requiresPermission(LIST_PERMISSION)
-      .then(
-        argument("filter", StringArgumentType.word())
-          .simplyRun(::sendListWithFilter)
-      )
-      .simplyRun(::sendList)
-
+      literal("list")
+          .requiresPermission(LIST_PERMISSION)
+          .then(
+              argument("filter", FilterArgumentType())
+                  .simplyRun(::sendListWithFilter))
+          .simplyRun(::sendList)
 
   private val toggleSection =
       literal("toggle")
@@ -89,14 +87,14 @@ class LogNotifyCommand(
 
   private val lnn =
       literal("lnn")
-        .requiresAnyPermission()
-        .simplyRun(::sendHelp)
-        .then(addSection)
-        .then(removeSection)
-        .then(listSection)
-        .then(toggleSection)
-        .then(reloadSection)
-        .build()
+          .requiresAnyPermission()
+          .simplyRun(::sendHelp)
+          .then(addSection)
+          .then(removeSection)
+          .then(listSection)
+          .then(toggleSection)
+          .then(reloadSection)
+          .build()
 
   private fun toggleNotifications(sender: CommandSender) {
     val newToggled = !storage.getSettings(sender.name).toggled
@@ -109,7 +107,6 @@ class LogNotifyCommand(
         if (newToggled) "<green>Включены</green>" else "<red>Выключены</red>"
     sender.sendRichMessage("Уведомления о входе: $toggledText")
   }
-
 
   private fun reload(sender: CommandSender) {
     plugin.reload()
@@ -139,8 +136,8 @@ class LogNotifyCommand(
     }
     if (sender.hasPermission(MATRIX_TOGGLE_PERMISSION)) {
       sender.sendRichMessage(
-        "<green>/matrixshutup <yellow>- " +
-            "Отключает уведомления <gray>[<dark_aqua>Matrix</dark_aqua>]</gray> <u>при входе</u>")
+          "<green>/matrixshutup <yellow>- " +
+              "Отключает уведомления <gray>[<dark_aqua>Matrix</dark_aqua>]</gray> <u>при входе</u>")
     }
   }
 
@@ -214,25 +211,27 @@ class LogNotifyCommand(
     val formattedDate = createdAt.toLoginNotifyFormat()
     val message = text()
     if (isPlayerOnline(playerName)) {
-      val playerNameComponent = text(playerName, GREEN)
-
-        if (plugin.isEdenorWarningsEnabled()) {
-          playerNameComponent
-            .hoverEvent(showText(text("Нажми, чтобы вызвать")))
-            .clickEvent(suggestCommand("/ew send check $playerName"))
-        }
+      val playerNameComponent =
+          if (plugin.isEdenorWarningsEnabled()) {
+            text(playerName, GREEN)
+                .hoverEvent(showText(text("Нажми, чтобы вызвать")))
+                .clickEvent(suggestCommand("/ew send check $playerName"))
+          } else {
+            text(playerName, GREEN)
+          }
       message.append(playerNameComponent)
     } else {
       message.append(text(playerName, RED))
     }
-    return message.append(text(": добавил"))
-      .appendSpace()
-      .append(text(addedBy, NamedTextColor.GRAY))
-      .appendSpace()
-      .append(text("в $formattedDate"))
-      .appendNewline()
-      .append(text("Описание: $comment"))
-      .build()
+    return message
+        .append(text(": добавил"))
+        .appendSpace()
+        .append(text(addedBy, NamedTextColor.GRAY))
+        .appendSpace()
+        .append(text("в $formattedDate"))
+        .appendNewline()
+        .append(text("Описание: $comment"))
+        .build()
   }
 
   private fun isPlayerOnline(playerName: String): Boolean =
