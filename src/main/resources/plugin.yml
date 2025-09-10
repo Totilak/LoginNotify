@@ -1,5 +1,5 @@
 name: LoginNotify
-version: '1.3'
+version: '1.4'
 author: Totilak
 contributors: [WesOrangePower]
 main: ru.edenor.loginNotify.LoginNotify
