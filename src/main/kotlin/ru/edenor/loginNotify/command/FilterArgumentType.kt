@@ -14,7 +14,7 @@ import io.papermc.paper.command.brigadier.argument.CustomArgumentType
 import net.kyori.adventure.text.Component
 import java.util.concurrent.CompletableFuture
 
-class FilterArgumentType() : CustomArgumentType<String, String> {
+class FilterArgumentType : CustomArgumentType<String, String> {
   companion object {
     @JvmStatic
     val ERROR_BAD_SOURCE =
