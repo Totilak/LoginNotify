@@ -50,7 +50,14 @@ class LogNotifyCommand(
                   .simplyRun(::remove))
 
   private val listSection =
-      literal("list").requiresPermission(LIST_PERMISSION).simplyRun(::sendList)
+    literal("list")
+      .requiresPermission(LIST_PERMISSION)
+      .then(
+        argument("filter", StringArgumentType.word())
+          .simplyRun(::sendListWithFilter)
+      )
+      .simplyRun(::sendList)
+
 
   private val toggleSection =
       literal("toggle")
@@ -104,7 +111,7 @@ class LogNotifyCommand(
 
   private fun sendHelp(sender: CommandSender) {
     sender.sendRichMessage(
-        "<green><bold>LoginNotify</bold> <dark_aqua>- Позволяет уведомлять администрацию о заходе игрока на сервер")
+        "<green><bold>LoginNotify</bold> <gray>(${plugin.pluginMeta.version})</gray> <dark_aqua>- Позволяет уведомлять администрацию о заходе игрока на сервер")
 
     if (sender.hasPermission(EDIT_PERMISSION)) {
       sender.sendRichMessage(
@@ -163,22 +170,42 @@ class LogNotifyCommand(
         }
   }
 
-  private fun sendList(sender: CommandSender) {
-    val players = storage.getPlayers().sortedBy { it.createdAt }
+  private fun sendListWithFilter(context: CommandContext<CommandSourceStack>) {
+    val sender = context.source.sender
+    val filter = StringArgumentType.getString(context, "filter")
+    sendList(sender, filter)
+  }
+
+  private fun sendList(sender: CommandSender, filter: String? = null) {
+    var players = storage.getPlayers().sortedBy { it.createdAt }
 
     if (players.isEmpty()) {
       sender.sendRichMessage("<red>Список пуст!")
+      return
+    }
+
+    // применяем фильтры
+    when (filter?.lowercase()) {
+      "+online" -> players = players.filter { isPlayerOnline(it.playerName) }
+      "-online" -> players = players.filter { !isPlayerOnline(it.playerName) }
+      "+offline" -> players = players.filter { !isPlayerOnline(it.playerName) }
+      "-offline" -> players = players.filter { isPlayerOnline(it.playerName) }
+    }
+
+    if (players.isEmpty()) {
+      sender.sendRichMessage("<red>Нет игроков по фильтру: $filter")
+      return
     }
 
     for ((playerName, comment, createdAt, addedBy) in players) {
       val formattedDate = createdAt.toLoginNotifyFormat()
 
       val name =
-          if (isPlayerOnline(playerName)) "<green>$playerName</green>"
-          else "<red>$playerName</red>"
+        if (isPlayerOnline(playerName)) "<green><hover:show_text:'Нажми, чтобы использовать'><click:suggest_command:/ew send check $playerName>$playerName</click></hover></green>"
+        else "<red>$playerName</red>"
 
       sender.sendRichMessage(
-          "$name: добавил <gold>$addedBy</gold> в $formattedDate <br>Описание: $comment")
+        "$name: добавил <gold>$addedBy</gold> в $formattedDate <br>Описание: $comment")
     }
   }
 
