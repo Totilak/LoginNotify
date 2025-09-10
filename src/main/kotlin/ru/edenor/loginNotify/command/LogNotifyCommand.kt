@@ -8,6 +8,13 @@ import io.papermc.paper.command.brigadier.Commands.argument
 import io.papermc.paper.command.brigadier.Commands.literal
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import io.papermc.paper.command.brigadier.argument.resolvers.PlayerProfileListResolver
+import net.kyori.adventure.text.Component.text
+import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.event.ClickEvent.suggestCommand
+import net.kyori.adventure.text.event.HoverEvent.showText
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.NamedTextColor.GREEN
+import net.kyori.adventure.text.format.NamedTextColor.RED
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import ru.edenor.loginNotify.LoginNotify
@@ -197,16 +204,35 @@ class LogNotifyCommand(
       return
     }
 
-    for ((playerName, comment, createdAt, addedBy) in players) {
-      val formattedDate = createdAt.toLoginNotifyFormat()
-
-      val name =
-        if (isPlayerOnline(playerName)) "<green><hover:show_text:'Нажми, чтобы использовать'><click:suggest_command:/ew send check $playerName>$playerName</click></hover></green>"
-        else "<red>$playerName</red>"
-
-      sender.sendRichMessage(
-        "$name: добавил <gold>$addedBy</gold> в $formattedDate <br>Описание: $comment")
+    for (player in players) {
+      sender.sendMessage(getRecordLine(player))
     }
+  }
+
+  private fun getRecordLine(record: NotificationRecord): TextComponent {
+    val (playerName, comment, createdAt, addedBy) = record
+    val formattedDate = createdAt.toLoginNotifyFormat()
+    val message = text()
+    if (isPlayerOnline(playerName)) {
+      val playerNameComponent = text(playerName, GREEN)
+
+        if (plugin.isEdenorWarningsEnabled()) {
+          playerNameComponent
+            .hoverEvent(showText(text("Нажми, чтобы вызвать")))
+            .clickEvent(suggestCommand("/ew send check $playerName"))
+        }
+      message.append(playerNameComponent)
+    } else {
+      message.append(text(playerName, RED))
+    }
+    return message.append(text(": добавил"))
+      .appendSpace()
+      .append(text(addedBy, NamedTextColor.GRAY))
+      .appendSpace()
+      .append(text("в $formattedDate"))
+      .appendNewline()
+      .append(text("Описание: $comment"))
+      .build()
   }
 
   private fun isPlayerOnline(playerName: String): Boolean =
