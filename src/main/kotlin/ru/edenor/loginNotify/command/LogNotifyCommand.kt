@@ -8,6 +8,13 @@ import io.papermc.paper.command.brigadier.Commands.argument
 import io.papermc.paper.command.brigadier.Commands.literal
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import io.papermc.paper.command.brigadier.argument.resolvers.PlayerProfileListResolver
+import net.kyori.adventure.text.Component.text
+import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.event.ClickEvent.suggestCommand
+import net.kyori.adventure.text.event.HoverEvent.showText
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.NamedTextColor.GREEN
+import net.kyori.adventure.text.format.NamedTextColor.RED
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import ru.edenor.loginNotify.LoginNotify
@@ -50,7 +57,12 @@ class LogNotifyCommand(
                   .simplyRun(::remove))
 
   private val listSection =
-      literal("list").requiresPermission(LIST_PERMISSION).simplyRun(::sendList)
+      literal("list")
+          .requiresPermission(LIST_PERMISSION)
+          .then(
+              argument("filter", FilterArgumentType())
+                  .simplyRun(::sendListWithFilter))
+          .simplyRun(::sendList)
 
   private val toggleSection =
       literal("toggle")
@@ -75,14 +87,14 @@ class LogNotifyCommand(
 
   private val lnn =
       literal("lnn")
-        .requiresAnyPermission()
-        .simplyRun(::sendHelp)
-        .then(addSection)
-        .then(removeSection)
-        .then(listSection)
-        .then(toggleSection)
-        .then(reloadSection)
-        .build()
+          .requiresAnyPermission()
+          .simplyRun(::sendHelp)
+          .then(addSection)
+          .then(removeSection)
+          .then(listSection)
+          .then(toggleSection)
+          .then(reloadSection)
+          .build()
 
   private fun toggleNotifications(sender: CommandSender) {
     val newToggled = !storage.getSettings(sender.name).toggled
@@ -96,7 +108,6 @@ class LogNotifyCommand(
     sender.sendRichMessage("Уведомления о входе: $toggledText")
   }
 
-
   private fun reload(sender: CommandSender) {
     plugin.reload()
     sender.sendRichMessage("<green>Настройки успешно перезагружены")
@@ -104,7 +115,7 @@ class LogNotifyCommand(
 
   private fun sendHelp(sender: CommandSender) {
     sender.sendRichMessage(
-        "<green><bold>LoginNotify</bold> <dark_aqua>- Позволяет уведомлять администрацию о заходе игрока на сервер")
+        "<green><bold>LoginNotify</bold> <gray>(${plugin.pluginMeta.version})</gray> <dark_aqua>- Позволяет уведомлять администрацию о заходе игрока на сервер")
 
     if (sender.hasPermission(EDIT_PERMISSION)) {
       sender.sendRichMessage(
@@ -125,8 +136,8 @@ class LogNotifyCommand(
     }
     if (sender.hasPermission(MATRIX_TOGGLE_PERMISSION)) {
       sender.sendRichMessage(
-        "<green>/matrixshutup <yellow>- " +
-            "Отключает уведомления <gray>[<dark_aqua>Matrix</dark_aqua>]</gray> <u>при входе</u>")
+          "<green>/matrixshutup <yellow>- " +
+              "Отключает уведомления <gray>[<dark_aqua>Matrix</dark_aqua>]</gray> <u>при входе</u>")
     }
   }
 
@@ -163,23 +174,64 @@ class LogNotifyCommand(
         }
   }
 
-  private fun sendList(sender: CommandSender) {
-    val players = storage.getPlayers().sortedBy { it.createdAt }
+  private fun sendListWithFilter(context: CommandContext<CommandSourceStack>) {
+    val sender = context.source.sender
+    val filter = StringArgumentType.getString(context, "filter")
+    sendList(sender, filter)
+  }
+
+  private fun sendList(sender: CommandSender, filter: String? = null) {
+    var players = storage.getPlayers().sortedBy { it.createdAt }
 
     if (players.isEmpty()) {
       sender.sendRichMessage("<red>Список пуст!")
+      return
     }
 
-    for ((playerName, comment, createdAt, addedBy) in players) {
-      val formattedDate = createdAt.toLoginNotifyFormat()
-
-      val name =
-          if (isPlayerOnline(playerName)) "<green>$playerName</green>"
-          else "<red>$playerName</red>"
-
-      sender.sendRichMessage(
-          "$name: добавил <gold>$addedBy</gold> в $formattedDate <br>Описание: $comment")
+    // применяем фильтры
+    when (filter?.lowercase()) {
+      "+online" -> players = players.filter { isPlayerOnline(it.playerName) }
+      "-online" -> players = players.filter { !isPlayerOnline(it.playerName) }
+      "+offline" -> players = players.filter { !isPlayerOnline(it.playerName) }
+      "-offline" -> players = players.filter { isPlayerOnline(it.playerName) }
     }
+
+    if (players.isEmpty()) {
+      sender.sendRichMessage("<red>Нет игроков по фильтру: $filter")
+      return
+    }
+
+    for (player in players) {
+      sender.sendMessage(getRecordLine(player))
+    }
+  }
+
+  private fun getRecordLine(record: NotificationRecord): TextComponent {
+    val (playerName, comment, createdAt, addedBy) = record
+    val formattedDate = createdAt.toLoginNotifyFormat()
+    val message = text()
+    if (isPlayerOnline(playerName)) {
+      val playerNameComponent =
+          if (plugin.isEdenorWarningsEnabled()) {
+            text(playerName, GREEN)
+                .hoverEvent(showText(text("Нажми, чтобы вызвать")))
+                .clickEvent(suggestCommand("/ew send check $playerName"))
+          } else {
+            text(playerName, GREEN)
+          }
+      message.append(playerNameComponent)
+    } else {
+      message.append(text(playerName, RED))
+    }
+    return message
+        .append(text(": добавил"))
+        .appendSpace()
+        .append(text(addedBy, NamedTextColor.GRAY))
+        .appendSpace()
+        .append(text("в $formattedDate"))
+        .appendNewline()
+        .append(text("Описание: $comment"))
+        .build()
   }
 
   private fun isPlayerOnline(playerName: String): Boolean =

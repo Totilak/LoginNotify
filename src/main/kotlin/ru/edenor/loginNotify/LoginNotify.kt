@@ -28,13 +28,15 @@ class LoginNotify : JavaPlugin() {
       }
     }
 
-    server.pluginManager.registerEvents(PlayerJoinHandler(this,storage), this)
+    server.pluginManager.registerEvents(PlayerJoinHandler(this, storage), this)
     server.pluginManager.registerEvents(WebhookListener(this, storage), this)
   }
 
   fun reload() {
     storage.reload()
   }
+
+  fun isEdenorWarningsEnabled() = server.pluginManager.isPluginEnabled("EdenorWarnings")
 
   companion object {
     const val NOTIFICATION_PERMISSION = "loginnotify.notify"
