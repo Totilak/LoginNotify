@@ -36,7 +36,7 @@ class FilterArgumentType : CustomArgumentType<String, String> {
     ): String = context.getArgument(argument, String::class.java)
 
     val filterList: List<String> =
-        listOf("-online", "+online", "-offline", "+offline")
+        listOf("online", "offline")
   }
 
   override fun parse(reader: StringReader): String = reader.readUnquotedString()
