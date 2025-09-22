@@ -4,7 +4,7 @@ author: Totilak
 contributors: [WesOrangePower]
 main: ru.edenor.loginNotify.LoginNotify
 description: The plugin allows you to notify the administration when marked players log in
-api-version: '1.21.8'
+api-version: '1.21.7'
 softdepend: [ Matrix, EdenorWarnings ]
 folia-supported: true
 permissions:
