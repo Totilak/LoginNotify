@@ -271,7 +271,7 @@ class LogNotifyCommand(
             .append(text("$currentPage", NamedTextColor.WHITE))
             .append(text("/", NamedTextColor.WHITE))
             .append(text("$totalPages ", NamedTextColor.WHITE))
-            .append(text("▶ ", NamedTextColor.GRAY)) // пробел после стрелки
+            .append(text("▶ ", NamedTextColor.GRAY))
 
     val maxShown = 8
     val startPage = ((currentPage - 1) / maxShown) * maxShown + 1
