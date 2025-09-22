@@ -14,10 +14,11 @@ import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.event.ClickEvent.runCommand
 import net.kyori.adventure.text.event.ClickEvent.suggestCommand
 import net.kyori.adventure.text.event.HoverEvent.showText
-import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.NamedTextColor.GRAY
 import net.kyori.adventure.text.format.NamedTextColor.GREEN
 import net.kyori.adventure.text.format.NamedTextColor.RED
-import net.kyori.adventure.text.format.TextDecoration
+import net.kyori.adventure.text.format.NamedTextColor.WHITE
+import net.kyori.adventure.text.format.TextDecoration.UNDERLINED
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import ru.edenor.loginNotify.LoginNotify
@@ -40,6 +41,11 @@ class LogNotifyCommand(
     private val plugin: LoginNotify,
     private val storage: Storage
 ) {
+
+  companion object {
+    const val PAGE_SIZE = 5
+  }
+
   fun commands(): Array<LiteralCommandNode<CommandSourceStack>> {
     return arrayOf(logNotify, lnn)
   }
@@ -220,13 +226,12 @@ class LogNotifyCommand(
       return
     }
 
-    val pageSize = 5
-    val totalPages = (players.size + pageSize - 1) / pageSize
+    val totalPages = (players.size + PAGE_SIZE - 1) / PAGE_SIZE
     val currentPage = page.coerceIn(1, totalPages)
 
     sender.sendRichMessage("<yellow>LoginNotify - Просмотр списка:")
 
-    val (startIndex, endIndex) = paginate(currentPage, pageSize, players.size)
+    val (startIndex, endIndex) = paginate(currentPage, total = players.size)
     for (i in startIndex until endIndex) {
       sender.sendMessage(getRecordLine(players[i]))
     }
@@ -247,7 +252,7 @@ class LogNotifyCommand(
     }
   }
 
-  private fun paginate(page: Int, pageSize: Int, total: Int): Pair<Int, Int> {
+  private fun paginate(page: Int, pageSize: Int = PAGE_SIZE, total: Int): Pair<Int, Int> {
     val startIndex = (page - 1) * pageSize
     val endIndex = min(startIndex + pageSize, total)
     return startIndex to endIndex
@@ -267,33 +272,33 @@ class LogNotifyCommand(
 
     val nav =
         text()
-            .append(text("Страница ", NamedTextColor.GREEN))
-            .append(text("$currentPage", NamedTextColor.WHITE))
-            .append(text("/", NamedTextColor.WHITE))
-            .append(text("$totalPages ", NamedTextColor.WHITE))
-            .append(text("▶ ", NamedTextColor.GRAY))
+            .append(text("Страница ", GREEN))
+            .append(text("$currentPage", WHITE))
+            .append(text("/", WHITE))
+            .append(text("$totalPages ", WHITE))
+            .append(text("▶ ", GRAY))
 
     val maxShown = 8
     val startPage = ((currentPage - 1) / maxShown) * maxShown + 1
     val endPage = min(startPage + maxShown - 1, totalPages)
 
-    nav.append(text("(", NamedTextColor.GRAY))
+    nav.append(text("(", GRAY))
 
     for (p in startPage..endPage) {
-      if (p > startPage) nav.append(text(" | ", NamedTextColor.GRAY))
+      if (p > startPage) nav.append(text(" | ", GRAY))
 
       val pageText =
-          text(p.toString(), NamedTextColor.WHITE)
-              .decoration(TextDecoration.UNDERLINED, p == currentPage)
+          text(p.toString(), WHITE)
+              .decoration(UNDERLINED, p == currentPage)
               .clickEvent(runCommand("$baseCommand$p"))
               .hoverEvent(
-                  showText(text("Перейти на страницу $p", NamedTextColor.GRAY)))
+                  showText(text("Перейти на страницу $p", GRAY)))
 
       nav.append(pageText)
     }
 
-    nav.append(text(")", NamedTextColor.GRAY))
-    if (endPage < totalPages) nav.append(text(" …", NamedTextColor.GRAY))
+    nav.append(text(")", GRAY))
+    if (endPage < totalPages) nav.append(text(" …", GRAY))
 
     sender.sendMessage(nav.build())
   }
@@ -318,7 +323,7 @@ class LogNotifyCommand(
     return message
         .append(text(": добавил"))
         .appendSpace()
-        .append(text(addedBy, NamedTextColor.GRAY))
+        .append(text(addedBy, GRAY))
         .appendSpace()
         .append(text("в $formattedDate"))
         .appendNewline()
