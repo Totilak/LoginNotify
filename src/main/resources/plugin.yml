@@ -1,5 +1,5 @@
 name: LoginNotify
-version: '1.4.1'
+version: ${version}
 author: Totilak
 contributors: [WesOrangePower]
 main: ru.edenor.loginNotify.LoginNotify
