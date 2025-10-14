@@ -11,14 +11,10 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import io.papermc.paper.command.brigadier.argument.resolvers.PlayerProfileListResolver
 import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.TextComponent
-import net.kyori.adventure.text.event.ClickEvent.runCommand
 import net.kyori.adventure.text.event.ClickEvent.suggestCommand
 import net.kyori.adventure.text.event.HoverEvent.showText
-import net.kyori.adventure.text.format.NamedTextColor.GRAY
-import net.kyori.adventure.text.format.NamedTextColor.GREEN
-import net.kyori.adventure.text.format.NamedTextColor.RED
-import net.kyori.adventure.text.format.NamedTextColor.WHITE
-import net.kyori.adventure.text.format.TextDecoration.UNDERLINED
+import net.kyori.adventure.text.format.NamedTextColor.*
+import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import ru.edenor.loginNotify.LoginNotify
@@ -237,7 +233,7 @@ class LogNotifyCommand(
     }
 
     if (totalPages > 1) {
-      sendPageNav(sender, currentPage, totalPages, filter)
+      sendPageNav(sender, currentPage, totalPages)
     }
   }
 
@@ -252,7 +248,11 @@ class LogNotifyCommand(
     }
   }
 
-  private fun paginate(page: Int, pageSize: Int = PAGE_SIZE, total: Int): Pair<Int, Int> {
+  private fun paginate(
+      page: Int,
+      pageSize: Int = PAGE_SIZE,
+      total: Int
+  ): Pair<Int, Int> {
     val startIndex = (page - 1) * pageSize
     val endIndex = min(startIndex + pageSize, total)
     return startIndex to endIndex
@@ -261,15 +261,8 @@ class LogNotifyCommand(
   private fun sendPageNav(
       sender: CommandSender,
       currentPage: Int,
-      totalPages: Int,
-      filter: String?
+      totalPages: Int
   ) {
-    val baseCommand = buildString {
-      append("/lognotify list")
-      if (!filter.isNullOrBlank()) append(" $filter")
-      append(" ")
-    }
-
     val nav =
         text()
             .append(text("Страница ", GREEN))
@@ -278,29 +271,42 @@ class LogNotifyCommand(
             .append(text("$totalPages ", WHITE))
             .append(text("▶ ", GRAY))
 
-    val maxShown = 8
-    val startPage = ((currentPage - 1) / maxShown) * maxShown + 1
-    val endPage = min(startPage + maxShown - 1, totalPages)
+    val ellipsis = " <gray>\u2026</gray> "
+    val separator = " <gray>|</gray> "
+    var pages = "<gray>("
 
-    nav.append(text("(", GRAY))
-
-    for (p in startPage..endPage) {
-      if (p > startPage) nav.append(text(" | ", GRAY))
-
-      val pageText =
-          text(p.toString(), WHITE)
-              .decoration(UNDERLINED, p == currentPage)
-              .clickEvent(runCommand("$baseCommand$p"))
-              .hoverEvent(
-                  showText(text("Перейти на страницу $p", GRAY)))
-
-      nav.append(pageText)
+    val pageNumbers = getPages(currentPage, totalPages)
+    if (1 !in pageNumbers) {
+      pages += pageComponent(1, currentPage) + ellipsis
     }
 
-    nav.append(text(")", GRAY))
-    if (endPage < totalPages) nav.append(text(" …", GRAY))
+    pages +=
+        pageNumbers.joinToString(separator) { pageComponent(it, currentPage) }
+
+    if (totalPages !in pageNumbers) {
+      pages += ellipsis + pageComponent(totalPages, currentPage)
+    }
+
+    pages += "<gray>)"
+
+    nav.append(MiniMessage.miniMessage().deserialize(pages))
 
     sender.sendMessage(nav.build())
+  }
+
+  private fun pageComponent(pageNumber: Int, currentPage: Int): String {
+    var s =
+        "<white>" +
+            "<click:run_command:/lnn list $pageNumber>" +
+            "<hover:show_text:'<gray>Перейти на страницу $pageNumber'>" +
+            "$pageNumber" +
+            "</hover>" +
+            "</click>" +
+            "</white>"
+    if (pageNumber == currentPage) {
+      s = "<u>$s</u>"
+    }
+    return s
   }
 
   private fun getRecordLine(record: NotificationRecord): TextComponent {
@@ -333,4 +339,35 @@ class LogNotifyCommand(
 
   private fun isPlayerOnline(playerName: String): Boolean =
       Bukkit.getPlayer(playerName) != null
+
+  private fun getPages(currentPage: Int, maxPage: Int): MutableList<Int> {
+    require(currentPage in 1..maxPage)
+    val firstPage = 1
+    val maxDisplayPages = 7
+
+    val pages: MutableList<Int> = ArrayList()
+
+    if (maxPage <= maxDisplayPages) {
+      for (i in firstPage..maxPage) {
+        pages.add(i)
+      }
+      return pages
+    }
+
+    if (currentPage <= 4) {
+      for (i in firstPage..maxDisplayPages) {
+        pages.add(i)
+      }
+    } else if (currentPage > maxPage - 4) {
+      for (i in maxPage - maxDisplayPages + 1..maxPage) {
+        pages.add(i)
+      }
+    } else {
+      for (i in currentPage - 3..currentPage + 3) {
+        pages.add(i)
+      }
+    }
+
+    return pages
+  }
 }
